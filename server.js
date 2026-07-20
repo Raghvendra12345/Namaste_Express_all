@@ -9,10 +9,38 @@ const app=express()
 
 app.use(express.json())  //using express json to convert json object into javascript object
 
-app.get("/", (req, res) => {
-    console.log("GET route hit");
-    res.send("Server Working");
+//GET All Data
+app.get("/getdata", async(req, res) => {
+    const data=await User.find()
+    
+     try{
+         console.log(data)
+    res.status(200).json(data)
+
+     }
+     catch(err){
+        res.status(500).json({error:"Something went wrong"})
+     }
+
 });
+
+//GET single Data
+app.get('/onedata',async(req,res)=>{
+    const userEmail=req.body.email
+    try{
+        const user=await User.findOne({email:userEmail})
+       res.status(200).json(user)
+
+    }
+    catch(err){
+        res.status(500).json({error:"Something went wrong"})
+        console.log(err.message)
+    }
+
+    
+})
+
+
 
 app.post("/signup",async(req,res)=>{
     console.log("Request received");
