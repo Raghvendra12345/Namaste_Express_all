@@ -1,27 +1,45 @@
 const express=require("express")
+require('./config/db.js')
 const PORT=7800
+const User=require("./models/user.js")
+console.log(User);
+console.log(typeof User);
 
 const app=express()
 
-// app.use('/working',(req,res)=>{
-//     res.send("Hello boy")
-// },
-// )
+app.get("/", (req, res) => {
+    console.log("GET route hit");
+    res.send("Server Working");
+});
 
+app.post("/signup",async(req,res)=>{
+    console.log("Request received");
 
-// app.use("/working",(req,res,next)=>{
-//     console.log("Handling 1")
-//     next()
-// },
-// (req,res,next)=>{
-//     console.log("Handling 2")
-//     res.send("Now its working fine")
-// }
-// )
+    //Creating insantance of the User Model
+    try{
+        const user=new User({ 
+         firstName:"Stuart",
+        lastName:"Houser",
+        email:"stuart@gmail.com",
+       password:"12345"
+    }
+       );
+       console.log("Before save");
+       await user.save();
+       console.log("After save");
 
+       res.status(201).json({message:"User saved successfully"})
 
+    }
+    catch(err){
+       res.status(500).json({error:"Error"})
+       console.log(err.message)
+    }
 
+    
 
+   
+});
 
 
 app.listen(PORT,()=>{
