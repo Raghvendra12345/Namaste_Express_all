@@ -1,26 +1,73 @@
 
 
 const mongoose=require("mongoose")
+const validator=require("validator")
 
 const userSchema=new mongoose.Schema({
     firstName:{
         type:String,
+        required:true,
+        minLength:4,
+        maxLength:50
     },
     lastName:{
-        type:String
+        type:String,
+        required:true
     },
     email:{
-        type:String
+        type:String,
+        required:true,
+        unique:true,
+        lowercase:true,
+        trim:true,
+        validate(value){
+            if(!validator.isEmail(value)){
+                throw new Error("Not a correct email address"+value)
+            }
+        },
     },
     password:{
-        type:String
+        type:String,
+        required:true,
+        validate(value){
+            if(!validator.isStrongPassword(value)){
+                throw new Error("Enter a Strong Password"+value)
+            }
+        },
     },
     age:{
-        type:Number
+        type:Number,
+        min:18,
+        
     },
     gender:{
-        type:String
+        type:String,
+        validate(value){
+            if(!["Male","Female","Others"].includes(value)){
+                throw new Error("Gender data is not valid")
+            }
+        }
+    },
+    photoUrl:{
+        type:String,
+        default:"https://kristalle.com/team/david-and-audrey-lloyd/dummy-profile-pic/",
+         validate(value){
+            if(!validator.isURL(value)){
+                throw new Error("Not a correct Photo URL"+value)
+            }
+        },
+    },
+    about:{
+        type:String,
+        default:"ˇThis is a default description"
+    },
+    skills:{
+        type:[String],
+        minLength:3,
+        maxLength:8
     }
+},{
+    timestamps:true     //it is used to know when the user is created
 });
 
 const User=mongoose.model('User',userSchema)

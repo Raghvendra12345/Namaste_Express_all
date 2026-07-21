@@ -10,17 +10,35 @@ const app = express();
 app.use(express.json()); //using express json to convert json object into javascript object
 
 
-app.patch('/update',async(req,res)=>{
-  const userId=req.body._id
+app.patch('/update/:userId',async(req,res)=>{
+  const userId=req.params.userId
   const data=req.body
 
   try{
-    const user=await User.findByIdAndUpdate({_id:userId},data)
+     const AllowedUpdates=["age","skills","photoUrl","about","gender"]
+
+     const isUpdateAllowed=Object.keys(data).every((k)=>
+                AllowedUpdates.includes(k)
+     )
+     
+     if(!isUpdateAllowed){
+      return res.status(400).json({error:"Update Not allowed for this section"})
+     }
+
+   
+   if(data.skills && data.skills.length>7){
+    return res.status(400).json({error:"Can't add more skills than 7"})
+   }
+
+    const user=await User.findByIdAndUpdate({_id:userId},data,{
+      returnDocument:"after",
+      runValidators:true
+    })
     res.status(200).json(user)
 
   }
   catch (err) {
-    res.status(500).json({ error: "Something went wrong" });
+    res.status(500).json( "Something went wrong" +err.message);
   }
   
 })
@@ -101,7 +119,7 @@ app.post("/signup", async (req, res) => {
 
     res.status(201).json({ message: "User saved successfully" });
   } catch (err) {
-    res.status(500).json({ error: "Error" });
+    res.status(500).json({ error:err.message });
     console.log(err.message);
   }
 });
