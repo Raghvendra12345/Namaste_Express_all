@@ -10,7 +10,7 @@ const userAuth = async (req, res,next) => {
       throw new Error("Invalid TOKEN");
     }
 
-    const decodedMessage = jwt.verify(token, "D@!SecretKey",{expiresIne:"1d"});
+    const decodedMessage = jwt.verify(token, "D@!SecretKey");
     console.log(decodedMessage);
 
     const { _id } = decodedMessage;
