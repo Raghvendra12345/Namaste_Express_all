@@ -3,10 +3,15 @@ require("./config/db.js");
 const PORT = 7800;
 const User = require("./models/user.js");
 const bcrypt = require("bcrypt");
+const cookieParser = require("cookie-parser");
+const jwt = require("jsonwebtoken");
+const userAuth=require("./Midddleware&Error_Handling/auth.js")
 
 const app = express();
 
 app.use(express.json()); //using express json to convert json object into javascript object
+
+app.use(cookieParser());
 
 app.patch("/update/:userId", async (req, res) => {
   const userId = req.params.userId;
@@ -65,9 +70,8 @@ app.get("/onedata", async (req, res) => {
 
 //DELETE data
 app.delete("/deleteId/:id", async (req, res) => {
-  const userId=req.params.id
+  const userId = req.params.id;
   try {
-    
     const user = await User.findByIdAndDelete(userId);
 
     if (!userId) {
@@ -84,13 +88,13 @@ app.delete("/deleteId/:id", async (req, res) => {
 
     res.status(200).json({ message: "User Deleted successfully" });
   } catch (err) {
-    res.status(500).json({ error: "Something went wrong" +err.message});
+    res.status(500).json({ error: "Something went wrong" + err.message });
     console.log(err.message);
   }
 });
 
 app.post("/signup", async (req, res) => {
-  console.log("Request received");
+  
 
   const { firstName, lastName, email, password } = req.body;
 
@@ -100,7 +104,7 @@ app.post("/signup", async (req, res) => {
     const saltrounds = 20;
 
     const passwordHash = await bcrypt.hash(password, saltrounds);
-    console.log(passwordHash);
+    
 
     const user = new User({
       firstName,
@@ -130,26 +134,50 @@ app.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const user = await User.findOne({email})
+    const user = await User.findOne({ email });
 
-    if(!user){
-      return es.status(402).json({error:"User not found"})
+    if (!user) {
+      return res.status(402).json({ error: "User not found" });
     }
 
-    const isPasswordValid = await bcrypt.compare(password,user.password);
+    const isPasswordValid = await bcrypt.compare(password, user.password);
 
-    if(!isPasswordValid){
-      return res.status(401).json({error:'Password is not valid'})
-    }
+    if (isPasswordValid) {
+      //Create JWT token
 
-    
-    res.status(200).json({message:'User LoggedIn Successfully'})
-    console.log('User Logged In')
+      const token = await jwt.sign({ _id: user._id }, "D@!SecretKey");
+      console.log(token);
+
+      // //ADD token to cookie and send the response
+      res.cookie("token", token,{
+        expires:new Date(Date.now()+8*360000),
+      });
+      res.status(200).json({ message: "User LoggedIn Successfully" });
+      console.log("User Logged In");
+    } else throw new Error("Invalid Credentials");
   } catch (err) {
-    res.status(500).json(err.message)
-    console.log(err.message)
+    res.status(500).json(err.message);
+    console.log(err.message);
   }
 });
+
+app.get("/profile",userAuth,async (req, res) => {
+  try {
+
+    //Validate the token
+    const user=req.user
+
+    res.status(200).send(user);
+  } catch (err) {
+    res.status(500).send("Something Error Occured   " + err.message);
+  }
+});
+
+app.post('/sendConnectionRequest',userAuth,async(req,res)=>{
+  const user=req.user
+
+  res.status(200).send(user.firstName+" sent the connection request")
+})
 
 app.listen(PORT, () => {
   console.log("server is running fine");
